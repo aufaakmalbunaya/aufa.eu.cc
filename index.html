@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUFA.EU.CC - Secure Payment</title>
+    
+    <!-- Memuat Tailwind CSS untuk layout responsif dasar -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* Mengimpor font Roboto Mono untuk kredibilitas teknis & Inter sebagai fallback Violetsans */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;600&display=swap');
+
+        :root {
+            /* 2. Color Palette & Roles dari design.md */
+            --bg-primary: #09090E;
+            --bg-surface: #0A090F;
+            --border-dark: #353539;
+            --text-primary: #EFEFE5;
+            --text-emphasis: #FFFFFF;
+            --accent-purple: #5529D3;
+            --accent-hover: #7D63FF;
+            --subtle-purple-shadow: rgba(85, 41, 211, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            /* Font primer: Violetsans dengan fallback Inter */
+            font-family: 'Violetsans', 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .font-mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        /* 4. Component Stylings: Feature Card */
+        .card {
+            background: rgba(0, 0, 0, 0);
+            border: 1px solid var(--border-dark);
+            border-radius: 0px; /* Zero border radius policy */
+            padding: 24px 32px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-hover);
+            box-shadow: 0 0 24px rgba(85, 41, 211, 0.15);
+        }
+
+        .qr-container {
+            background: #FFFFFF; /* Latar putih agar QR dapat di-scan dengan baik */
+            border: 1px solid var(--border-dark);
+            padding: 16px;
+            border-radius: 0px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+<comment-tag id="1">        .qr-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Spacing system (multiples of 4px) */</comment-tag id="1" text="Untuk memperbaiki temuan 3 (R-11), tambahkan 'border-radius: 0px;' pada blok CSS .qr-container img ini. Kemudian, untuk mendukung temuan 1 (R-27), tambahkan gaya animasi skeleton tepat di atas komentar Spacing system, yaitu: '@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } } .skeleton-bg { animation: pulse 2s infinite; background-color: var(--border-dark); }'" type="suggestion">
+        .gap-micro { gap: 4px; }
+        .gap-tight { gap: 8px; }
+        .gap-standard { gap: 16px; }
+        .gap-generous { gap: 24px; }
+        .gap-section { gap: 32px; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+<comment-tag id="2">    <main class="w-full max-w-[400px] flex flex-col gap-section"></comment-tag id="2" text="Untuk memperbaiki temuan 2 (R-31), tambahkan komentar HTML tepat di atas baris ini yang mendokumentasikan alasan penggunaan lebar maksimal. Contohnya: '<!-- Reason (R-31): max-w-[400px] membatasi lebar kartu agar QR code nyaman dipindai dan UI tidak melar di layar desktop -->'" type="suggestion">
+        
+        <!-- Header Section -->
+        <header class="flex flex-col gap-tight text-center">
+            <h2 class="font-mono text-[12px] font-normal leading-[12px] text-[#EFEFE5] uppercase tracking-widest">
+                Payment Gateway
+            </h2>
+            <h1 class="text-[48px] font-normal leading-[51.36px] text-[#FFFFFF]">
+                AUFA.EU.CC
+            </h1>
+        </header>
+
+        <!-- Feature Card untuk menampung QR -->
+        <section class="card flex flex-col gap-generous" aria-label="QRIS Payment Scanner">
+            
+<comment-tag id="3">            <div class="qr-container">
+                <!-- Fallback alt text jika gambar gagal dimuat (C-4 Resilience) -->
+                <img src="qris.jpg" alt="QRIS Code for AUFA Payment" onerror="this.onerror=null; this.src='https://placehold.co/400x400/09090E/EFEFE5?text=QR+Not+Found';">
+            </div></comment-tag id="3" text="Untuk memperbaiki temuan 1 (R-27), tambahkan class 'skeleton-bg' dan atribut id='qr-wrapper' pada div qr-container. Kemudian pada tag img, tambahkan atribut 'onload' (seperti: onload='document.getElementById(\'qr-wrapper\').classList.remove(\'skeleton-bg\');') untuk menghapus class skeleton-bg saat gambar berhasil dimuat. Pastikan penghapusan class tersebut juga ditambahkan di dalam atribut 'onerror'." type="suggestion">
+            
+            <div class="flex flex-col gap-tight text-center">
+                <!-- Instruksi menggunakan Typography Rules (Body) -->
+                <p class="text-[13px] font-normal leading-[14.95px] text-[#EFEFE5]">
+                    Scan kode QR di atas menggunakan aplikasi perbankan atau e-wallet Anda untuk menyelesaikan pembayaran.
+                </p>
+            </div>
+        </section>
+
+        <footer class="flex flex-col items-center gap-micro mt-4">
+            <p class="font-mono text-[12px] leading-[14.4px] text-[#F8F8FA] opacity-70">
+                Network: QRIS Standard
+            </p>
+        </footer>
+
+    </main>
+
+</body>
+</html>
