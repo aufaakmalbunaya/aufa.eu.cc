@@ -3,121 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AUFA.EU.CC - Secure Payment</title>
-    
-    <!-- Memuat Tailwind CSS untuk layout responsif dasar -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+    <title>QRIS</title>
     <style>
-        /* Mengimpor font Roboto Mono untuk kredibilitas teknis & Inter sebagai fallback Violetsans */
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;600&display=swap');
-
-        :root {
-            /* 2. Color Palette & Roles dari design.md */
-            --bg-primary: #09090E;
-            --bg-surface: #0A090F;
-            --border-dark: #353539;
-            --text-primary: #EFEFE5;
-            --text-emphasis: #FFFFFF;
-            --accent-purple: #5529D3;
-            --accent-hover: #7D63FF;
-            --subtle-purple-shadow: rgba(85, 41, 211, 0.1);
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
+        /* Gaya terinspirasi situs personal bersih seperti devrangga.dev dan
+           hidaffa.com: latar terang, headline besar, ruang putih lega,
+           kartu putih dengan bayangan lembut, dan gerak masuk yang halus.
+           Isi dan logika QRIS tidak berubah. */
+        * { box-sizing: border-box; }
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            /* Font primer: Violetsans dengan fallback Inter */
-            font-family: 'Violetsans', 'Inter', -apple-system, sans-serif;
+            background: #FAFAF8;
+            color: #111111;
+            font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-
-        .font-mono {
-            font-family: 'Roboto Mono', monospace;
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* 4. Component Stylings: Feature Card */
+        main { width: 100%; max-width: 460px; animation: rise .6s ease both; }
         .card {
-            background: rgba(0, 0, 0, 0);
-            border: 1px solid var(--border-dark);
-            border-radius: 0px; /* Zero border radius policy */
-            padding: 24px 32px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: #FFFFFF;
+            border: 1px solid #E7E7E3;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            padding: 24px;
+            animation: rise .6s ease .1s both;
         }
-
-        .card:hover {
-            border-color: var(--accent-hover);
-            box-shadow: 0 0 24px rgba(85, 41, 211, 0.15);
-        }
-
         .qr-container {
-            background: #FFFFFF; /* Latar putih agar QR dapat di-scan dengan baik */
-            border: 1px solid var(--border-dark);
-            padding: 16px;
-            border-radius: 0px;
+            background: #FFFFFF;
+            border-radius: 12px;
             width: 100%;
             aspect-ratio: 1 / 1;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-
-<comment-tag id="1">        .qr-container img {
-            max-width: 100%;
-            height: auto;
-            display: block;
+        .qr-container img { max-width: 100%; height: auto; display: block; }
+        .instruction {
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4B5563;
+            margin: 20px 0 0;
         }
-
-        /* Spacing system (multiples of 4px) */</comment-tag id="1" text="Untuk memperbaiki temuan 3 (R-11), tambahkan 'border-radius: 0px;' pada blok CSS .qr-container img ini. Kemudian, untuk mendukung temuan 1 (R-27), tambahkan gaya animasi skeleton tepat di atas komentar Spacing system, yaitu: '@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } } .skeleton-bg { animation: pulse 2s infinite; background-color: var(--border-dark); }'" type="suggestion">
-        .gap-micro { gap: 4px; }
-        .gap-tight { gap: 8px; }
-        .gap-standard { gap: 16px; }
-        .gap-generous { gap: 24px; }
-        .gap-section { gap: 32px; }
+        .download-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            background: #111111;
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 16px;
+            border-radius: 999px;
+            margin-top: 20px;
+            transition: background .2s ease, transform .2s ease;
+        }
+        .download-btn:hover { background: #000000; transform: translateY(-1px); }
+        .download-btn:active { transform: translateY(0); }
+        .not-set {
+            text-align: center;
+            font-size: 14px;
+            color: #6B7280;
+            background: #FFFFFF;
+            border: 1px dashed #D1D5DB;
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="p-4 sm:p-8">
-
-<comment-tag id="2">    <main class="w-full max-w-[400px] flex flex-col gap-section"></comment-tag id="2" text="Untuk memperbaiki temuan 2 (R-31), tambahkan komentar HTML tepat di atas baris ini yang mendokumentasikan alasan penggunaan lebar maksimal. Contohnya: '<!-- Reason (R-31): max-w-[400px] membatasi lebar kartu agar QR code nyaman dipindai dan UI tidak melar di layar desktop -->'" type="suggestion">
-        
-        <!-- Header Section -->
-        <header class="flex flex-col gap-tight text-center">
-            <h2 class="font-mono text-[12px] font-normal leading-[12px] text-[#EFEFE5] uppercase tracking-widest">
-                Payment Gateway
-            </h2>
-            <h1 class="text-[48px] font-normal leading-[51.36px] text-[#FFFFFF]">
-                AUFA.EU.CC
-            </h1>
-        </header>
-
-        <!-- Feature Card untuk menampung QR -->
-        <section class="card flex flex-col gap-generous" aria-label="QRIS Payment Scanner">
-            
-<comment-tag id="3">            <div class="qr-container">
-                <!-- Fallback alt text jika gambar gagal dimuat (C-4 Resilience) -->
-                <img src="qris.jpg" alt="QRIS Code for AUFA Payment" onerror="this.onerror=null; this.src='https://placehold.co/400x400/09090E/EFEFE5?text=QR+Not+Found';">
-            </div></comment-tag id="3" text="Untuk memperbaiki temuan 1 (R-27), tambahkan class 'skeleton-bg' dan atribut id='qr-wrapper' pada div qr-container. Kemudian pada tag img, tambahkan atribut 'onload' (seperti: onload='document.getElementById(\'qr-wrapper\').classList.remove(\'skeleton-bg\');') untuk menghapus class skeleton-bg saat gambar berhasil dimuat. Pastikan penghapusan class tersebut juga ditambahkan di dalam atribut 'onerror'." type="suggestion">
-            
-            <div class="flex flex-col gap-tight text-center">
-                <!-- Instruksi menggunakan Typography Rules (Body) -->
-                <p class="text-[13px] font-normal leading-[14.95px] text-[#EFEFE5]">
-                    Scan kode QR di atas menggunakan aplikasi perbankan atau e-wallet Anda untuk menyelesaikan pembayaran.
-                </p>
+<body>
+    <main>
+        <!-- QRIS: hanya tampil kalau admin sudah memilih di /ngadimin (config.json selected = A/B/C).
+             Kalau selected = null, seluruh section ini disembunyikan oleh script di bawah,
+             termasuk tombol unduhnya. -->
+        <section id="qr-section" class="card hidden" aria-label="QRIS Payment Scanner">
+            <div class="qr-container">
+                <img id="qr-img" src="" alt="QRIS">
             </div>
+            <p class="instruction">
+                scan qr
+            </p>
+            <a id="qr-download" class="download-btn" href="" download="">Unduh QRIS &darr;</a>
         </section>
 
-        <footer class="flex flex-col items-center gap-micro mt-4">
-            <p class="font-mono text-[12px] leading-[14.4px] text-[#F8F8FA] opacity-70">
-                Network: QRIS Standard
-            </p>
-        </footer>
-
+        <!-- Tampil hanya kalau QRIS belum diatur. Ini bukan QRIS, hanya penanda status. -->
+        <div id="not-set-note" class="not-set hidden">
+            QRIS belum diatur.
+        </div>
     </main>
 
+    <script>
+        // Aturan tampil: hanya A, B, atau C yang valid. Selain itu (null, kosong,
+        // atau nilai lain) QRIS TIDAK ditampilkan, begitu juga tombol unduhnya.
+        (function () {
+            var valid = { A: 'qris-A.png', B: 'qris-B.png', C: 'qris-C.png' };
+            fetch('config.json?ts=' + Date.now())
+                .then(function (r) { return r.json(); })
+                .then(function (cfg) {
+                    var file = cfg && valid[cfg.selected];
+                    if (file) {
+                        var img = document.getElementById('qr-img');
+                        var dl = document.getElementById('qr-download');
+                        img.src = file;
+                        img.alt = 'QRIS ' + cfg.selected;
+                        dl.href = file;
+                        dl.download = 'qris-' + cfg.selected + '-aufa-eu-cc.png';
+                        document.getElementById('qr-section').classList.remove('hidden');
+                    } else {
+                        document.getElementById('not-set-note').classList.remove('hidden');
+                    }
+                })
+                .catch(function () {
+                    // Kalau config.json gagal dimuat, aman: jangan tampilkan QRIS.
+                    document.getElementById('not-set-note').classList.remove('hidden');
+                });
+        })();
+    </script>
 </body>
 </html>
