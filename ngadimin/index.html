@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin QRIS - AUFA.EU.CC</title>
+    <title>Admin QRIS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
-        /* Gaya diselaraskan dengan web utama: terang, bersih, seperti
-           situs personal devrangga.dev / hidaffa.com. Logika admin tidak berubah. */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
         body { background:#FAFAF8; color:#111111; font-family: Inter, -apple-system, sans-serif; margin:0; padding:48px 20px; }
         main { max-width:720px; margin:0 auto; }
@@ -21,75 +19,85 @@
         .download-link { display:inline-block; margin-top:8px; font-size:13px; font-weight:600; color:#111111; text-decoration:underline; }
         .btn { width:100%; margin-top:8px; padding:12px; cursor:pointer; border:1px solid #111111; background:#111111; color:#fff; font-size:14px; font-weight:600; border-radius:999px; }
         .btn.secondary { background:transparent; border-color:#D1D5DB; color:#111111; }
-        input[type="password"], input[type="text"] { width:100%; box-sizing:border-box; padding:10px 12px; background:#FFFFFF; border:1px solid #D1D5DB; border-radius:10px; color:#111111; }
-        #status { padding:12px; border:1px solid #E7E7E3; border-radius:12px; white-space:pre-wrap; }
+        input[type="password"] { width:100%; box-sizing:border-box; padding:10px 12px; background:#FFFFFF; border:1px solid #D1D5DB; border-radius:10px; color:#111111; }
+        #status, #login-error { padding:12px; border:1px solid #E7E7E3; border-radius:12px; white-space:pre-wrap; }
         #status.ok { border-color:#2e7d32; }
-        #status.err { border-color:#b3261e; }
+        #status.err, #login-error.err { border-color:#b3261e; }
         a { color:#111111; }
         code { background:#F3F4F6; padding:2px 6px; border-radius:6px; }
         label { display:block; margin:12px 0 6px; font-size:14px; }
         .preview-box { max-width:220px; background:#fff; padding:8px; border:1px solid #E7E7E3; border-radius:12px; }
         .preview-box img { width:100%; display:block; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 <main>
     <h1>Admin QRIS</h1>
-    <p class="muted">Halaman ini ada di <code>/ngadimin</code>. Halaman ini <b>bukan</b> password: siapa pun yang membuka alamat ini bisa melihat pilihan di bawah, tapi <b>tidak bisa mengubah</b> yang tampil di web tanpa token GitHub kamu. Token itu kuncinya, dan token tidak pernah ditulis ke repo ini.</p>
 
-    <div class="card">
-        <strong>Status saat ini (untuk pengunjung)</strong>
-        <p id="current" class="muted">Memuat config.json…</p>
-        <div id="current-preview" class="preview-box" style="display:none">
-            <img id="current-img" src="" alt="QRIS yang sedang tampil">
+    <!-- LOGIN: hanya password. Password TIDAK disimpan di repo dan TIDAK
+         ditulis di halaman ini. Password dikirim lewat HTTPS ke Worker,
+         Worker yang membandingkannya dengan secret ADMIN_PASSWORD.
+         Di browser, password hanya disimpan di sessionStorage (hilang
+         saat tab ditutup / setelah logout), bukan localStorage. -->
+    <div class="card" id="login-card">
+        <strong>Login admin</strong>
+        <p class="muted">Masukkan password admin. Password ini kamu set sendiri sebagai secret Worker (<code>ADMIN_PASSWORD</code>) di Cloudflare, bukan di repo ini.</p>
+        <label for="password">Password admin</label>
+        <input id="password" type="password" placeholder="Password admin" autocomplete="current-password">
+        <button class="btn" id="btn-login" type="button">Masuk</button>
+        <div id="login-error" class="hidden"></div>
+    </div>
+
+    <!-- ADMIN: baru tampil setelah login berhasil. Label di sini hanya
+         untuk admin; halaman pengunjung tidak memuat label ini sama sekali. -->
+    <div id="admin-section" class="hidden">
+        <div class="card">
+            <strong>Status saat ini (untuk pengunjung)</strong>
+            <p id="current" class="muted">Memuat…</p>
+            <div id="current-preview" class="preview-box" style="display:none">
+                <img id="current-img" src="" alt="QRIS yang sedang tampil">
+            </div>
+            <p><a id="current-download" class="download-link" href="" download="" style="display:none">Unduh QRIS yang sedang tampil</a></p>
+            <button class="btn secondary" id="btn-logout" type="button">Keluar</button>
         </div>
-        <p><a id="current-download" class="download-link" href="" download="" style="display:none">Unduh QRIS yang sedang tampil</a></p>
-    </div>
 
-    <div class="card">
-        <strong>Pilih QRIS yang tampil di web</strong>
-        <p class="muted">Klik salah satu. Pratinjau di bawah berubah langsung, tapi pengunjung baru melihat perubahan setelah kamu tekan <b>Simpan</b>. Setiap pilihan juga bisa diunduh langsung dari kartunya.</p>
-        <div class="options" id="options"></div>
-        <button class="btn secondary" id="btn-clear" type="button">Kosongkan — jangan tampilkan QRIS di web</button>
-        <p class="muted">Pratinjau pilihan kamu:</p>
-        <div id="preview" class="preview-box" style="display:none">
-            <img id="preview-img" src="" alt="Pratinjau QRIS">
+        <div class="card">
+            <strong>Pilih QRIS yang tampil di web</strong>
+            <p class="muted">Klik salah satu, lalu tekan <b>Simpan</b>. Begitu tersimpan, QRIS langsung tampil di web — tanpa menunggu rebuild GitHub Pages, karena yang disimpan hanya pilihan di Cloudflare KV.</p>
+            <div class="options" id="options"></div>
+            <button class="btn secondary" id="btn-clear" type="button">Kosongkan — jangan tampilkan QRIS di web</button>
+            <p class="muted">Pratinjau pilihan kamu:</p>
+            <div id="preview" class="preview-box" style="display:none">
+                <img id="preview-img" src="" alt="Pratinjau QRIS">
+            </div>
+            <p><a id="preview-download" class="download-link" href="" download="" style="display:none">Unduh pratinjau ini</a></p>
+            <p id="preview-note" class="muted">Belum ada pilihan. Kalau disimpan dalam keadaan ini, web tidak menampilkan QRIS.</p>
+            <button class="btn" id="btn-save" type="button">Simpan</button>
+            <div id="status">Belum ada aksi.</div>
         </div>
-        <p><a id="preview-download" class="download-link" href="" download="" style="display:none">Unduh pratinjau ini</a></p>
-        <p id="preview-note" class="muted">Belum ada pilihan. Kalau disimpan dalam keadaan ini, web tidak menampilkan QRIS.</p>
-    </div>
 
-    <div class="card">
-        <strong>Simpan ke GitHub (supaya pengunjung melihat perubahan)</strong>
-        <label for="token">GitHub Personal Access Token (fine-grained)</label>
-        <input id="token" type="password" placeholder="Tempel token di sini — hanya di perangkat ini">
-        <label><input id="remember" type="checkbox"> Ingat token di perangkat ini saja (localStorage browser ini)</label>
-        <p class="muted">Cara membuat token: <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> → Fine-grained tokens → New token → hanya repo <code>aufaakmalbunaya/aufa.eu.cc</code> → permission <code>Contents: Read and write</code>. Token ini hanya dikirim dari browser kamu ke <code>api.github.com</code>, tidak pernah dikirim ke pihak lain dan tidak ditulis ke repo. Cabut kapan saja dari halaman token GitHub kalau sudah tidak dipakai.</p>
-        <button class="btn" id="btn-save" type="button">Simpan pilihan ke repo</button>
-        <p></p>
-        <button class="btn secondary" id="btn-download" type="button">Tanpa token: unduh config.json saja</button>
-        <p class="muted">Kalau tanpa token: unduh file-nya, lalu upload / timpa <code>config.json</code> di repo lewat web GitHub. Setelah itu GitHub Pages biasanya butuh sekitar 1 menit untuk menampilkan perubahan (tekan hard refresh di web).</p>
-        <div id="status">Belum ada aksi.</div>
+        <p class="muted"><a href="/">← Kembali ke web</a></p>
     </div>
-
-    <p class="muted"><a href="/">← Kembali ke web</a></p>
 </main>
 
 <script>
 (function () {
-    var REPO = 'aufaakmalbunaya/aufa.eu.cc';
-    var API = 'https://api.github.com/repos/' + REPO + '/contents/config.json';
-    var IMAGES = { A: '/qris-A.png', B: '/qris-B.png', C: '/qris-C.png' };
-    var choice = null; // null = kosongkan, tidak tampilkan QRIS
+    // URL Worker yang sudah di-deploy:
+    // sama persis dengan yang di halaman utama.
+    var WORKER_URL = "https://aufa-qris.qriscode.workers.dev";
+    // Label hanya untuk admin. Id "1"/"2"/"3" adalah yang dikirim ke Worker.
+    // Halaman pengunjung tidak punya pemetaan ini.
+    var LABELS = { "1": "SPAY", "2": "GOPAY", "3": "DANA" };
+    var IMAGES = { "1": "/qris-1.png", "2": "/qris-2.png", "3": "/qris-3.png" };
+    var choice = null;
     var statusEl = document.getElementById('status');
 
-    function setStatus(text, cls) {
-        statusEl.textContent = text;
-        statusEl.className = cls || '';
-    }
-    function downloadName(k) { return 'qris-' + k + '-aufa-eu-cc.png'; }
-    function setDownload(el, k) {
-        if (k && IMAGES[k]) { el.href = IMAGES[k]; el.download = downloadName(k); el.style.display = 'inline-block'; }
+    function setStatus(text, cls) { statusEl.textContent = text; statusEl.className = cls || ''; }
+    function getPassword() { return sessionStorage.getItem('ngadimin_password') || ''; }
+    function downloadName(id) { return 'qris-' + LABELS[id].toLowerCase() + '-aufa-eu-cc.png'; }
+    function setDownload(el, id) {
+        if (id && IMAGES[id]) { el.href = IMAGES[id]; el.download = downloadName(id); el.style.display = 'inline-block'; }
         else { el.style.display = 'none'; }
     }
     function showPreview() {
@@ -98,7 +106,7 @@
         if (choice && IMAGES[choice]) {
             document.getElementById('preview-img').src = IMAGES[choice];
             box.style.display = 'block';
-            note.textContent = 'Pratinjau: QRIS ' + choice + ' (belum tersimpan untuk pengunjung sampai kamu tekan Simpan).';
+            note.textContent = 'Pratinjau: ' + LABELS[choice] + ' (belum tersimpan sampai kamu tekan Simpan).';
         } else {
             box.style.display = 'none';
             note.textContent = 'Belum ada pilihan. Kalau disimpan dalam keadaan ini, web tidak menampilkan QRIS.';
@@ -108,80 +116,81 @@
             el.classList.toggle('selected', el.dataset.value === choice);
         });
     }
-    function renderOptions() {
-        var wrap = document.getElementById('options');
-        ['A', 'B', 'C'].forEach(function (k) {
-            var div = document.createElement('div');
-            div.className = 'opt'; div.dataset.value = k;
-            div.innerHTML = '<img src="' + IMAGES[k] + '" alt="QRIS ' + k + '"><div style="margin-top:8px"><strong>QRIS ' + k + '</strong></div><a class="download-link" href="' + IMAGES[k] + '" download="' + downloadName(k) + '">Unduh QRIS ' + k + '</a>';
-            div.addEventListener('click', function () { choice = k; showPreview(); });
-            wrap.appendChild(div);
-        });
-    }
-    function configJson() {
-        return JSON.stringify({ selected: choice }, null, 2) + '\n';
-    }
-    function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
-
-    // Muat status saat ini dari config.json (cache-bust, supaya tidak dapat versi lama)
-    fetch('/config.json?ts=' + Date.now()).then(function (r) { return r.json(); }).then(function (cfg) {
+    function showCurrent(selected) {
         var cur = document.getElementById('current');
-        if (cfg && (cfg.selected === 'A' || cfg.selected === 'B' || cfg.selected === 'C')) {
-            cur.textContent = 'Saat ini: QRIS ' + cfg.selected + ' tampil di web.';
-            document.getElementById('current-img').src = IMAGES[cfg.selected];
+        if (selected && LABELS[selected]) {
+            cur.textContent = 'Saat ini: ' + LABELS[selected] + ' tampil di web.';
+            document.getElementById('current-img').src = IMAGES[selected];
             document.getElementById('current-preview').style.display = 'block';
-            setDownload(document.getElementById('current-download'), cfg.selected);
-            choice = cfg.selected;
+            setDownload(document.getElementById('current-download'), selected);
+            choice = selected;
         } else {
             cur.textContent = 'Saat ini: belum diset — web tidak menampilkan QRIS.';
+            document.getElementById('current-preview').style.display = 'none';
+            setDownload(document.getElementById('current-download'), null);
             choice = null;
         }
         showPreview();
-    }).catch(function () {
-        document.getElementById('current').textContent = 'Tidak bisa memuat config.json. Dianggap belum diset — web tidak menampilkan QRIS.';
-        showPreview();
-    });
+    }
+    function renderOptions() {
+        var wrap = document.getElementById('options');
+        ['1', '2', '3'].forEach(function (id) {
+            var div = document.createElement('div');
+            div.className = 'opt'; div.dataset.value = id;
+            div.innerHTML = '<img src="' + IMAGES[id] + '" alt="QRIS ' + LABELS[id] + '"><div style="margin-top:8px"><strong>' + LABELS[id] + '</strong></div><a class="download-link" href="' + IMAGES[id] + '" download="' + downloadName(id) + '">Unduh ' + LABELS[id] + '</a>';
+            div.addEventListener('click', function () { choice = id; showPreview(); });
+            wrap.appendChild(div);
+        });
+    }
+    async function post(path, body) {
+        var r = await fetch(WORKER_URL + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        var data = null;
+        try { data = await r.json(); } catch (e) { data = null; }
+        if (!r.ok) throw new Error((data && data.error) ? data.error : ('HTTP ' + r.status));
+        return data;
+    }
+    async function doLogin() {
+        var pw = document.getElementById('password').value;
+        var errEl = document.getElementById('login-error');
+        errEl.classList.add('hidden'); errEl.textContent = '';
+        if (!pw) { errEl.textContent = 'Masukkan password dulu.'; errEl.className = 'err'; errEl.classList.remove('hidden'); return; }
+        try {
+            var data = await post('/status', { password: pw });
+            sessionStorage.setItem('ngadimin_password', pw);
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('admin-section').classList.remove('hidden');
+            showCurrent(data.selected);
+        } catch (e) {
+            errEl.textContent = 'Gagal login: ' + e.message;
+            errEl.className = 'err'; errEl.classList.remove('hidden');
+        }
+    }
+    function doLogout() {
+        sessionStorage.removeItem('ngadimin_password');
+        document.getElementById('password').value = '';
+        document.getElementById('admin-section').classList.add('hidden');
+        document.getElementById('login-card').classList.remove('hidden');
+    }
 
     renderOptions();
+    document.getElementById('btn-login').addEventListener('click', doLogin);
+    document.getElementById('password').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('btn-logout').addEventListener('click', doLogout);
     document.getElementById('btn-clear').addEventListener('click', function () { choice = null; showPreview(); });
-
-    // Token: ingat hanya kalau dicentang, dan hanya di localStorage browser ini
-    var saved = localStorage.getItem('ngadimin_github_token');
-    if (saved) { document.getElementById('token').value = saved; document.getElementById('remember').checked = true; }
-
-    document.getElementById('btn-save').addEventListener('click', function () {
-        var token = document.getElementById('token').value.trim();
-        if (!token) { setStatus('Masukkan token GitHub dulu, atau pakai tombol unduh config.json di bawah.', 'err'); return; }
-        if (document.getElementById('remember').checked) { localStorage.setItem('ngadimin_github_token', token); }
-        else { localStorage.removeItem('ngadimin_github_token'); }
-        setStatus('Menyimpan… mengambil config.json lama dulu untuk mendapatkan SHA-nya.');
-        fetch(API, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } })
-            .then(function (r) { if (!r.ok) throw new Error('Gagal membaca config.json dari GitHub (HTTP ' + r.status + '). Periksa token dan permission Contents repo ini.'); return r.json(); })
-            .then(function (old) {
-                return fetch(API, {
-                    method: 'PUT',
-                    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: 'Set QRIS to ' + (choice === null ? 'none' : choice) + ' via /ngadimin',
-                        content: b64(configJson()),
-                        sha: old.sha
-                    })
-                });
-            })
-            .then(function (r) { if (!r.ok) throw new Error('Gagal menyimpan (HTTP ' + r.status + '). Periksa token dan permission Contents repo ini.'); return r.json(); })
-            .then(function () {
-                setStatus('Tersimpan. Pengunjung akan melihat ' + (choice === null ? 'tidak ada QRIS' : 'QRIS ' + choice) + ' setelah GitHub Pages selesai deploy (biasanya sekitar 1 menit, tekan hard refresh di web).', 'ok');
-                document.getElementById('current').textContent = choice === null ? 'Saat ini: belum diset — web tidak menampilkan QRIS.' : 'Saat ini: QRIS ' + choice + ' tampil di web.';
-            })
-            .catch(function (e) { setStatus('Gagal: ' + e.message, 'err'); });
-    });
-
-    document.getElementById('btn-download').addEventListener('click', function () {
-        var blob = new Blob([configJson()], { type: 'application/json' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'config.json'; a.click();
-        URL.revokeObjectURL(a.href);
-        setStatus('config.json terunduh. Upload / timpa file itu di repo lewat web GitHub, lalu tunggu GitHub Pages deploy.', 'ok');
+    document.getElementById('btn-save').addEventListener('click', async function () {
+        setStatus('Menyimpan…');
+        try {
+            var data = await post('/set', { password: getPassword(), selected: choice });
+            setStatus('Tersimpan. Pengunjung sekarang melihat ' + (data.selected === null ? 'tidak ada QRIS' : LABELS[data.selected]) + ' — langsung, tanpa menunggu rebuild.', 'ok');
+            showCurrent(data.selected);
+        } catch (e) {
+            if (e.message === 'Password salah.') { setStatus('Gagal: password salah atau sesi habis. Keluar lalu login lagi.', 'err'); }
+            else { setStatus('Gagal: ' + e.message, 'err'); }
+        }
     });
 })();
 </script>

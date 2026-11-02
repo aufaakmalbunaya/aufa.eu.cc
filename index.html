@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRIS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap');
-        /* Gaya terinspirasi situs personal bersih seperti devrangga.dev dan
-           hidaffa.com: latar terang, headline besar, ruang putih lega,
-           kartu putih dengan bayangan lembut, dan gerak masuk yang halus.
-           Isi dan logika QRIS tidak berubah. */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        /* Halaman pengunjung: HANYA QR + tombol unduh + "scan qr".
+           Disengaja tidak ada nama penyedia, tidak ada pemetaan, dan tidak
+           ada nama file QR di halaman ini. QR diambil dari Worker (/qr),
+           jadi nama penyedia tidak bisa dibaca dari halaman ini. */
         * { box-sizing: border-box; }
         body {
             background: #FAFAF8;
@@ -67,7 +67,6 @@
             transition: background .2s ease, transform .2s ease;
         }
         .download-btn:hover { background: #000000; transform: translateY(-1px); }
-        .download-btn:active { transform: translateY(0); }
         .not-set {
             text-align: center;
             font-size: 14px;
@@ -82,50 +81,38 @@
 </head>
 <body>
     <main>
-        <!-- QRIS: hanya tampil kalau admin sudah memilih di /ngadimin (config.json selected = A/B/C).
-             Kalau selected = null, seluruh section ini disembunyikan oleh script di bawah,
-             termasuk tombol unduhnya. -->
+        <!-- QR tampil hanya kalau Worker mengembalikan gambar (admin sudah set).
+             Kalau belum diset / Worker error, section ini tetap tersembunyi
+             dan hanya catatan "QRIS belum diatur" yang tampil. -->
         <section id="qr-section" class="card hidden" aria-label="QRIS Payment Scanner">
             <div class="qr-container">
                 <img id="qr-img" src="" alt="QRIS">
             </div>
-            <p class="instruction">
-                scan qr
-            </p>
-            <a id="qr-download" class="download-btn" href="" download="">Unduh QRIS &darr;</a>
+            <p class="instruction">scan qr</p>
+            <a id="qr-download" class="download-btn" href="" download="qris-aufa-eu-cc.png">Unduh QRIS &darr;</a>
         </section>
 
-        <!-- Tampil hanya kalau QRIS belum diatur. Ini bukan QRIS, hanya penanda status. -->
         <div id="not-set-note" class="not-set hidden">
             QRIS belum diatur.
         </div>
     </main>
 
     <script>
-        // Aturan tampil: hanya A, B, atau C yang valid. Selain itu (null, kosong,
-        // atau nilai lain) QRIS TIDAK ditampilkan, begitu juga tombol unduhnya.
+        // URL Worker yang sudah di-deploy:
+        // misalnya https://aufa-qris.<subdomain>.workers.dev (tanpa garis miring di akhir).
+        var WORKER_URL = "https://aufa-qris.qriscode.workers.dev";
         (function () {
-            var valid = { A: 'qris-A.png', B: 'qris-B.png', C: 'qris-C.png' };
-            fetch('config.json?ts=' + Date.now())
-                .then(function (r) { return r.json(); })
-                .then(function (cfg) {
-                    var file = cfg && valid[cfg.selected];
-                    if (file) {
-                        var img = document.getElementById('qr-img');
-                        var dl = document.getElementById('qr-download');
-                        img.src = file;
-                        img.alt = 'QRIS ' + cfg.selected;
-                        dl.href = file;
-                        dl.download = 'qris-' + cfg.selected + '-aufa-eu-cc.png';
-                        document.getElementById('qr-section').classList.remove('hidden');
-                    } else {
-                        document.getElementById('not-set-note').classList.remove('hidden');
-                    }
-                })
-                .catch(function () {
-                    // Kalau config.json gagal dimuat, aman: jangan tampilkan QRIS.
-                    document.getElementById('not-set-note').classList.remove('hidden');
-                });
+            var img = document.getElementById('qr-img');
+            var dl = document.getElementById('qr-download');
+            var ts = Date.now();
+            dl.href = WORKER_URL + '/qr-download?ts=' + ts;
+            img.onload = function () {
+                document.getElementById('qr-section').classList.remove('hidden');
+            };
+            img.onerror = function () {
+                document.getElementById('not-set-note').classList.remove('hidden');
+            };
+            img.src = WORKER_URL + '/qr?ts=' + ts;
         })();
     </script>
 </body>

@@ -1,28 +1,35 @@
-# aufa.eu.cc — QRIS + Admin /ngadimin
+# aufa.eu.cc — versi Worker (login password, tampil instan)
 
-Situs statis GitHub Pages (branch `main`, root `/`, custom domain `aufa.eu.cc`).
+**Jangan push folder ini mentah-mentah sebelum Worker di-deploy dan
+`__WORKER_URL__` diganti dengan URL Worker yang sebenarnya.**
+Kalau halaman ini di-push tanpa Worker, web pengunjung tidak akan
+menampilkan QR (aman, tapi kosong).
 
 ## File
 
-- `index.html` — halaman web pengunjung. QRIS hanya tampil kalau `config.json` memilih A, B, atau C. Gaya terang dan bersih, terinspirasi situs personal devrangga.dev dan hidaffa.com (headline besar, ruang putih lega, kartu putih berbayang lembut, animasi masuk halus) — isinya tetap payment QRIS, bukan meniru konten mereka. Di bawah QR ada tombol **Unduh QRIS** yang mengunduh file PNG QRIS yang sedang tampil (`qris-A/B/C-aufa-eu-cc.png`). Tombol ini ikut tersembunyi kalau QRIS belum diset.
-- `config.json` — satu-satunya pengaturan: `{"selected": null}` = belum diset, web tidak menampilkan QRIS. `{"selected": "A"}` (atau `"B"` / `"C"`) = tampilkan QRIS itu.
-- `qris-A.png`, `qris-B.png`, `qris-C.png` — QRIS v2 yang dipilih user (A = QRIS lama di web, B = lampiran pertama, C = lampiran kedua).
-- `ngadimin/index.html` dan `ngadimin.html` — halaman admin, bisa dibuka lewat `https://aufa.eu.cc/ngadimin/` (atau `/ngadimin.html`). Isinya sama, gayanya diselaraskan dengan web utama. Setiap kartu QRIS di admin juga punya tautan unduh, begitu juga pratinjau dan QRIS yang sedang tampil.
+- `index.html` — halaman pengunjung. Hanya QR + tombol unduh + "scan qr".
+  Tidak ada nama penyedia, tidak ada pemetaan, tidak ada nama file QR.
+  QR diambil dari Worker `/qr`, unduhan dari `/qr-download`
+  (nama file selalu generik `qris-aufa-eu-cc.png`).
+- `ngadimin/index.html` + `ngadimin.html` — admin. Login password dulu,
+  baru tampil pilihan. Label admin: `1` = SPAY, `2` = GOPAY, `3` = DANA.
+- `qris-1.png` (SPAY, dulu A), `qris-2.png` (GOPAY, dulu B),
+  `qris-3.png` (DANA, dulu C). Nama file sengaja angka saja, bukan nama penyedia.
 - `CNAME` — `aufa.eu.cc`.
 
-## Cara admin mengatur QRIS
+## Urutan deploy
 
-1. Buka `https://aufa.eu.cc/ngadimin/`.
-2. Klik QRIS A / B / C, atau **Kosongkan** kalau tidak mau menampilkan QRIS.
-3. Simpan dengan salah satu cara:
-   - **Pakai token GitHub (langsung jadi):** buat fine-grained token di github.com/settings/tokens, hanya repo `aufaakmalbunaya/aufa.eu.cc`, permission `Contents: Read and write`. Tempel di halaman admin, tekan Simpan. Token hanya dikirim dari browser admin ke `api.github.com`, tidak ditulis ke repo, dan bisa dicabut kapan saja.
-   - **Tanpa token:** tekan "unduh config.json", lalu upload/timpa `config.json` di repo lewat web GitHub.
-4. Tunggu GitHub Pages deploy (biasanya sekitar 1 menit), lalu hard refresh di web.
+Lihat `../worker/README-DEPLOY.md` selengkapnya. Ringkasnya:
+1. Push dulu `qris-1/2/3.png` ke GitHub.
+2. Buat KV namespace, deploy Worker (`worker/`), set secret `ADMIN_PASSWORD`.
+3. Ganti `__WORKER_URL__` di `index.html` dan `ngadimin/*` dengan URL Worker.
+4. Push halaman utama + admin ke GitHub.
+5. Uji: login di `/ngadimin`, Simpan, web utama langsung tampil QR baru.
 
-## Keamanan — penting
+## Yang berubah dari versi sebelumnya
 
-`/ngadimin` itu hanya alamat yang tidak umum, **bukan** password. Siapa pun yang menebak alamat itu bisa melihat halaman admin, tapi tidak bisa mengubah yang tampil di web tanpa token GitHub di atas. Jangan pernah membagikan token, dan jangan menulis token ke file repo mana pun.
-
-## Catatan deploy
-
-File `qris.jpg` lama tidak lagi dipakai halaman ini dan tidak ada di folder ini. Kalau folder ini di-push menimpa repo, `qris.jpg` lama masih akan ada di repo sampai dihapus manual — itu tidak masalah karena tidak ditampilkan, tapi boleh dihapus supaya rapi.
+- Dulu: admin simpan lewat token GitHub ke `config.json`, web menunggu
+  rebuild GitHub Pages (~1 menit), admin tidak pakai password.
+- Sekarang: admin login password saja, simpan ke Cloudflare KV lewat
+  Worker, web langsung tampil tanpa rebuild. `config.json` tidak lagi
+  dipakai halaman utama.
